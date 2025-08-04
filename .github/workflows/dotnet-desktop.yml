@@ -63,18 +63,24 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Install .NET Framework 4.0 targeting pack
-    - name: Install .NET Framework 4.0 targeting pack
+    # Install .NET Framework 4.0 Reference Assemblies
+    - name: Install .NET Framework 4.0 Reference Assemblies
       run: |
-        # Install .NET Framework 4.0 targeting pack using chocolatey
-        choco install netfx-4.0-devpack -y
-        # Alternatively, install via direct download if chocolatey fails
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "Chocolatey installation failed, trying direct download..."
-          $url = "https://download.microsoft.com/download/A/4/1/A4151A3C-3A91-4181-B3F2-3324B6C6B4A4/NDP40-KB2600211-x86-x64-AllOS-ENU.exe"
-          $output = "$env:TEMP\NDP40-KB2600211-x86-x64-AllOS-ENU.exe"
-          Invoke-WebRequest -Uri $url -OutFile $output
-          Start-Process -FilePath $output -ArgumentList "/quiet" -Wait
+        # Install NuGet package that contains .NET Framework 4.0 reference assemblies
+        Write-Host "Installing .NET Framework 4.0 reference assemblies via NuGet..."
+        nuget install Microsoft.NETFramework.ReferenceAssemblies.net40 -OutputDirectory packages -NonInteractive
+        
+        # Copy reference assemblies to the expected location
+        $packagePath = Get-ChildItem -Path "packages\Microsoft.NETFramework.ReferenceAssemblies.net40*" | Select-Object -First 1
+        $refAssembliesSource = Join-Path $packagePath.FullName "build\.NETFramework\v4.0"
+        $refAssembliesTarget = "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
+        
+        if (Test-Path $refAssembliesSource) {
+          Write-Host "Copying reference assemblies to: $refAssembliesTarget"
+          New-Item -ItemType Directory -Path $refAssembliesTarget -Force
+          Copy-Item -Path "$refAssembliesSource\*" -Destination $refAssembliesTarget -Recurse -Force
+        } else {
+          Write-Host "Reference assemblies source not found at: $refAssembliesSource"
         }
 
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
