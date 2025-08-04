@@ -63,9 +63,19 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Setup .NET Framework (already available on windows-latest)
-    - name: Setup .NET Framework
-      run: echo ".NET Framework is pre-installed on windows-latest runner"
+    # Install .NET Framework 4.0 targeting pack
+    - name: Install .NET Framework 4.0 targeting pack
+      run: |
+        # Install .NET Framework 4.0 targeting pack using chocolatey
+        choco install netfx-4.0-devpack -y
+        # Alternatively, install via direct download if chocolatey fails
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Chocolatey installation failed, trying direct download..."
+          $url = "https://download.microsoft.com/download/A/4/1/A4151A3C-3A91-4181-B3F2-3324B6C6B4A4/NDP40-KB2600211-x86-x64-AllOS-ENU.exe"
+          $output = "$env:TEMP\NDP40-KB2600211-x86-x64-AllOS-ENU.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/quiet" -Wait
+        }
 
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
