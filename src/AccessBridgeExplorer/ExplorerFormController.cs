@@ -341,6 +341,13 @@ namespace AccessBridgeExplorer {
       _view.AccessibilityTree.BeforeExpand += AccessibilityTree_BeforeExpand;
       _view.AccessibilityTree.KeyDown += AccessibilityTree_KeyDown;
       _view.AccessibilityTree.GotFocus += AccessibilityTree_GotFocus;
+      
+      // 创建右键菜单
+      var contextMenu = new ContextMenuStrip();
+      var copyXPathMenuItem = new ToolStripMenuItem("复制 XPath");
+      copyXPathMenuItem.Click += CopyXPathMenuItem_Click;
+      contextMenu.Items.Add(copyXPathMenuItem);
+      _view.AccessibilityTree.ContextMenuStrip = contextMenu;
 
       _view.MessageList.MouseDoubleClick += AccessibilityMessageList_MouseDoubleClick;
       _view.MessageList.KeyDown += AccessibilityMessageList_KeyDown;
@@ -1262,6 +1269,81 @@ namespace AccessBridgeExplorer {
           SetOverlayNode(accessibleNode, OverlayActivationSource.TreeViewSelection);
         }
       });
+    }
+
+    private void CopyXPathMenuItem_Click(object sender, EventArgs e) {
+      var selectedNode = _view.AccessibilityTree.SelectedNode;
+      if (selectedNode == null)
+        return;
+
+      UiAction(() => {
+        var nodeModel = selectedNode.Tag as AccessibleNodeModel;
+        if (nodeModel != null && nodeModel.AccessibleNode != null) {
+          var xpath = GenerateXPath(nodeModel.AccessibleNode);
+          if (!string.IsNullOrEmpty(xpath)) {
+            Clipboard.SetText(xpath);
+            LogMessage("XPath 已复制到剪贴板: " + xpath);
+          }
+        }
+      });
+    }
+
+    private string GenerateXPath(AccessibleNode node) {
+      try {
+        var path = node.BuildNodePath();
+        var xpathParts = new List<string>();
+        
+        foreach (var pathNode in path) {
+          var role = "unknown";
+          var name = "";
+          var index = 0;
+          
+          var contextNode = pathNode as AccessibleContextNode;
+          if (contextNode != null) {
+            var info = contextNode.GetInfo();
+            role = info.role != null ? info.role : "unknown";
+            name = info.name != null ? info.name : "";
+            
+            // 使用indexinparent属性
+            var indexInParent = contextNode.GetIndexInParent();
+            if (indexInParent >= 0) {
+              index = indexInParent;
+            }
+          } else {
+            var window = pathNode as AccessibleWindow;
+            if (window != null) {
+              role = "window";
+              var title = window.GetTitle();
+              name = title != null ? title : "";
+              index = 1;
+            } else {
+              var jvm = pathNode as AccessibleJvm;
+              if (jvm != null) {
+                role = "jvm";
+                var title = jvm.GetTitle();
+                name = title != null ? title : "";
+                index = 1;
+              }
+            }
+          }
+          
+          // 构建XPath部分  
+          var xpathPart = (xpathParts.Count == 0 ? "//" : "/") + role;
+          if (index >= 0) {
+            xpathPart += "[@indexinparent=" + index + "]";
+          }
+          if (!string.IsNullOrEmpty(name)) {
+            xpathPart += "[@name='" + name.Replace("'", "\"") + "']";
+          }
+          
+          xpathParts.Add(xpathPart);
+        }
+        
+        return string.Join("", xpathParts);
+      } catch (Exception ex) {
+        LogErrorMessage(ex);
+        return "";
+      }
     }
 
     private void ComponentPropertyListView_AccessibleRectInfoSelected(object sender, AccessibleRectInfoSelectedEventArgs e) {
