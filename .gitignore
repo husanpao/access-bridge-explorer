@@ -6,3 +6,5 @@ Release/
 *.opensdf
 *.user
 *.log
+.idea
+bin
