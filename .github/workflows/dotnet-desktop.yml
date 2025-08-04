@@ -39,6 +39,8 @@ name: .NET Framework Desktop
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches: [ "master" ]
 
@@ -103,3 +105,55 @@ jobs:
       with:
         name: AccessBridgeExplorer-${{ matrix.configuration }}
         path: bin\${{ matrix.configuration }}\
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: AccessBridgeExplorer-Release
+        path: release-artifacts
+        
+    - name: Create Release Archive
+      run: |
+        # 创建发布包
+        $version = "${{ github.ref_name }}"
+        $archiveName = "AccessBridgeExplorer-$version.zip"
+        
+        # 压缩Release构建产物
+        Compress-Archive -Path "release-artifacts\*" -DestinationPath $archiveName
+        
+        # 输出文件信息供后续步骤使用
+        echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Access Bridge Explorer ${{ env.VERSION }}
+        body: |
+          ## Access Bridge Explorer ${{ env.VERSION }}
+          
+          ### 下载
+          - [AccessBridgeExplorer-${{ env.VERSION }}.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/AccessBridgeExplorer-${{ env.VERSION }}.zip) - 完整应用程序包
+          
+          ### 更新内容
+          请查看 [CHANGES.md](https://github.com/${{ github.repository }}/blob/master/CHANGES.md) 了解详细的更新内容。
+          
+          ### 系统要求
+          - Windows 7 或更高版本
+          - .NET Framework 4.0 或更高版本
+          - Java Access Bridge (通常随Java一起安装)
+        files: |
+          ${{ env.ARCHIVE_NAME }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
