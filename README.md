@@ -37,6 +37,17 @@ holistic support for screen readers in their application.
 
 ![Access Bridge Explorer](/screenshots/AccessBridgeExplorer.png?raw=true "Access Bridge Explorer")
 
+## Latest Updates
+
+### Version 1.2
+
+* **新增属性列表右键菜单及复制功能**
+  * 新增属性列表右键菜单，支持"复制属性值"和"复制所有属性"功能
+  * 添加快捷键 Ctrl+C 直接复制选中属性值到剪贴板
+  * 提升用户操作便捷性
+
+更多版本历史请查看 [CHANGES.md](/CHANGES.md)。
+
 ## Requirements
 
 The [Access Bridge Explorer](https://github.com/google/access-bridge-explorer)
