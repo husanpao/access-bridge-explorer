@@ -39,11 +39,10 @@ holistic support for screen readers in their application.
 
 ## Latest Updates
 
-### Version 1.2
+### Version 1.3
 
-* **新增属性列表右键菜单及复制功能**
-  * 新增属性列表右键菜单，支持"复制属性值"和"复制所有属性"功能
-  * 添加快捷键 Ctrl+C 直接复制选中属性值到剪贴板
+* **新增左侧树右键菜单及xpath复制功能**
+  * 新增左侧树右键菜单及xpath复制功能
   * 提升用户操作便捷性
 
 更多版本历史请查看 [CHANGES.md](/CHANGES.md)。

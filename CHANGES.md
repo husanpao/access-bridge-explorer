@@ -1,5 +1,9 @@
 # Access Bridge Explorer Version History
+## Version 1.3
 
+* feat: 新增左侧树右键菜单及xpath复制功能
+  * 新增左侧树右键菜单及xpath复制功能
+  * 提升用户操作便捷性
 
 ## Version 1.2
 
